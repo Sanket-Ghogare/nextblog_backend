@@ -141,3 +141,58 @@ export const deletePost = async (req, res) => {
 
     }
 }
+
+
+// export const updatepost=async(req , res)=>{
+//     try {
+//         const id=req.params.id;
+//         await Blog.findOne({_id:id});
+//             const  {path}=req.file;
+//             const cloudinaryResponse = await uploadOnCloudnary(path);
+//             fileUrl = cloudinaryResponse.url;
+//             const update=await Blog.findByIdAndUpdate(id ,{new:true});
+
+//             if(!update){
+//                 return res.status(404).json({error: 'Blog not found '});
+//             }
+
+//             res.json(update);
+
+        
+//     } catch (error) {
+//         console.log('Failed to update blog ',error);
+
+//     }
+// }
+export const updatepost = async (req, res) => {
+    try {
+      const id = req.params.id;
+      const { title, content, category } = req.body;
+      let imageUrl = '';
+  
+      if (req.file) {
+        const { path } = req.file;
+        const cloudinaryResponse = await uploadOnCloudnary(path);
+        imageUrl = cloudinaryResponse.url;
+      } else {
+        // Use the existing image URL if no new file is uploaded
+        const existingPost = await Blog.findById(id);
+        imageUrl = existingPost.image;
+      }
+  
+      const updatedPost = await Blog.findByIdAndUpdate(
+        id,
+        { title, content, category, image: imageUrl },
+        { new: true }
+      );
+  
+      if (!updatedPost) {
+        return res.status(404).json({ error: 'Blog not found' });
+      }
+  
+      res.json(updatedPost);
+    } catch (error) {
+      console.log('Failed to update blog ', error);
+      res.status(500).json({ error: 'Failed to update blog' });
+    }
+  };
