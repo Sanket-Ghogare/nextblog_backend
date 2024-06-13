@@ -63,6 +63,45 @@ export const LoginUser = async (req, res) => {
     }
 }
 
+// export const uploadImages = async (req, res) => {
+//     try {
+//         // if (req.file || !req.user.username) {
+//         //     return res.status(401).json({ error: "Unauthorized", errorMessage: error.message });
+//         // }
+//         // const loggedInUname = req.user.username;
+//         let fileUrl = "";
+
+//         if (!req.file) {
+//             return res.status(400).json({ error: "No file uploaded"});
+//         }
+
+//         if (req.file) {
+//             const { path } = req.file;
+//             const cloudinaryResponse = await uploadOnCloudnary(path);
+//             fileUrl = cloudinaryResponse.url;
+//         } else {
+//             fileUrl = "https://images.unsplash.com/photo-1543128639-4cb7e6eeef1b?ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bGFwdG9wJTIwc2V0dXB8ZW58MHx8MHx8&ixlib=rb-1.2.1&w=1000&q=80";
+//         }
+
+
+//         const newBlogPost = new Blog({
+//             author: req.body.author,
+//             title: req.body.title,
+//             content: req.body.content,
+//             category: req.body.category,
+//             image: fileUrl,
+//         });
+//         await newBlogPost.save();
+//         res.json({ url: fileUrl });
+//     }
+//     catch (error) {
+//         console.error("Error while uploading image:", error);
+//         return res.status(500).json({ error: "Failed to upload image", errorMessage: error.message });
+
+//     }
+
+// }
+
 export const uploadImages = async (req, res) => {
     try {
         // if (req.file || !req.user.username) {
@@ -167,23 +206,24 @@ export const deletePost = async (req, res) => {
 export const updatepost = async (req, res) => {
     try {
       const id = req.params.id;
-      const { title, content, category } = req.body;
+      const { title, content, image} = req.body;
       let imageUrl = '';
   
-      if (req.file) {
-        const { path } = req.file;
-        const cloudinaryResponse = await uploadOnCloudnary(path);
-        imageUrl = cloudinaryResponse.url;
-      } else {
-        // Use the existing image URL if no new file is uploaded
-        const existingPost = await Blog.findById(id);
-        imageUrl = existingPost.image;
-      }
+      // Check if a new file is uploaded
+    //   if (req.file) {
+    //     const { path } = req.file;
+    //     const cloudinaryResponse = await uploadOnCloudnary(path);
+    //     imageUrl = cloudinaryResponse.url;
+    //   } else {
+    //     // Use the existing image URL if no new file is uploaded
+    //     const existingPost = await Blog.findById(id);
+    //     imageUrl = existingPost.image;
+    //   }
   
       const updatedPost = await Blog.findByIdAndUpdate(
         id,
-        { title, content, category, image: imageUrl },
-        { new: true }
+        { title, content,image },
+        { new: true, runValidators: true }
       );
   
       if (!updatedPost) {
