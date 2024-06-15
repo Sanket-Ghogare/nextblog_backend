@@ -141,3 +141,35 @@ export const deletePost = async (req, res) => {
 
     }
 }
+
+
+
+export const updateBlog = async (req, res) => {
+    
+    try {
+      const { id } = req.params;
+      const updatedPost ={
+        title:req.body.title,
+        content:req.body.content,
+      };
+
+      if(req.file){
+        const{path}=req.file;
+        const cloudinaryResponse=await uploadOnCloudnary(path);
+        updatedPost.image=cloudinaryResponse.url;
+      }
+  
+      const post = await Blog.findByIdAndUpdate(id, updatedPost, { new: true });
+  
+      if (!post) {
+        return res.status(404).json({ error: 'Blog post not found' });
+    } 
+    return res.json(post);
+    } catch (error) {
+        return res.status(500).json({ error: "Something went wrong", errorMessage: error.message });
+    }
+  };
+  
+
+
+  
