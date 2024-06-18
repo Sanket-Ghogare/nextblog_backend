@@ -3,7 +3,7 @@ const {Schema}=mongoose
 
 const BlogSchema= new Schema({
  
-    // user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } ,
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } ,
     author:{
         type:String,
         required:false 
