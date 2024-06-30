@@ -9,7 +9,6 @@ import Blog from '../models/blogSchema.js';
 import Comments from '../models/comments.js';
 
 const ACCESS_SECRET_KEY = process.env.ACCESS_SECRET_KEY;
-const REFRESH_SECRET_KEY = process.env.REFRESH_SECRET_KEY;
 
 export const signupUser = async (req, res) => {
 
@@ -38,28 +37,24 @@ export const LoginUser = async (req, res) => {
 
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).json("Username does not match")
+      return res.status(400).json({ error: "User does not exist" });
     }
     const match = await bcrypt.compareSync(password, user.password);
     if (match) {
-      // if (!ACCESS_SECRET_KEY || !REFRESH_SECRET_KEY) {
-      //     throw new Error('Secret keys are not defined');
-      // }
       const accessToken = jwt.sign(user.toJSON(), ACCESS_SECRET_KEY);
-      const refreshToken = jwt.sign(user.toJSON(), REFRESH_SECRET_KEY);
-      const isAdmin = user.isAdmin ? jwt.sign({ isAdmin: true }, JWT_SECRET) : null;
-
-      // const newToken = new Token({})
+      const isAdmin = user.isAdmin ? jwt.sign({ isAdmin: true }, ACCESS_SECRET_KEY) : null;
       return res.status(200).json({
         accessToken,
-        // refreshToken,
         isAdmin: isAdmin ? isAdmin : '',
-        name: user.name,
+        // name: user.name,
         username: user.username
       });
-    } else {
+
+    }
+    else {
       return res.status(400).json({ error: "Password does not match" });
     }
+
   } catch (error) {
     console.error("Error during login:", error);
     return res.status(500).json({ error: "Something went wrong", errorMessage: error.message });
@@ -68,10 +63,10 @@ export const LoginUser = async (req, res) => {
 
 export const uploadImages = async (req, res) => {
   try {
-    if (req.file || !req.user.username) {
-      return res.status(401).json({ error: "Unauthorized", errorMessage: error.message });
-    }
-    const loggedInUname = req.user.username;
+    // if (req.file || !req.user.username) {
+    //   return res.status(401).json({ error: "Unauthorized", errorMessage: error.message });
+    // }
+    // const loggedInUname = req.user.username;
     let fileUrl = "";
 
     if (!req.file) {
@@ -88,7 +83,7 @@ export const uploadImages = async (req, res) => {
 
 
     const newBlogPost = new Blog({
-      author: loggedInUname,
+      // author: loggedInUname,
       title: req.body.title,
       content: req.body.content,
       category: req.body.category,
@@ -134,14 +129,13 @@ export const deletePost = async (req, res) => {
   try {
     const id = req.params.id;
     const blog = await Blog.findOneAndDelete({ _id: id });
-
-    if (blog && blog.author === req.user.username) {
-      await Blog.findByIdAndDelete({ _id: id });
-      return res.json({
-        sucess: "true"
-      })
-    }
-
+    res.json(blog);
+    // if (blog && blog.author === req.user.username) {
+    //   await Blog.findByIdAndDelete({ _id: id });
+    //   return res.json({
+    //     sucess: "true"
+    //   })
+    // }
 
   } catch (error) {
     res.status(500).json({ error: "failed to delete post" });
@@ -169,9 +163,9 @@ export const updateBlog = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: 'Blog post not found' });
     }
-    if (post.author !== req.user.username) {
-      return res.status(404).json({ error: 'Unauthorized' });
-    }
+    // if (post.author !== req.user.username) {
+    //   return res.status(404).json({ error: 'Unauthorized' });
+    // }
     return res.json(post);
   } catch (error) {
     return res.status(500).json({ error: "Something went wrong", errorMessage: error.message });
@@ -191,12 +185,17 @@ export const getComments = async (req, res) => {
 // Create a new comment
 export const createComment = async (req, res) => {
   try {
-    const { name, postid, comments } = req.body;
-    const newComment = new Comments({ name, postid, comments });
+    const { username, postid, comments } = req.body;
+
+    if (!postid) {
+      return res.status(400).json({ error: 'Post ID is required' });
+    }
+    const newComment = new Comments({ username, postid, comments });
     await newComment.save();
     res.status(201).json(newComment);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create comment' });
+    console.error("Error creating comment:", error);
+    return res.status(500).json({ error: "Something went wrong", errorMessage: error.message });
   }
 };
 
@@ -216,7 +215,7 @@ export const updateComment = async (req, res) => {
     }
     res.status(200).json(updatedComment);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update comment' });
+    return res.status(500).json({ error: "Something went wrong", errorMessage: error.message });
   }
 };
 
@@ -231,5 +230,25 @@ export const deleteComment = async (req, res) => {
     res.status(200).json({ message: 'Comment deleted' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete comment' });
+  }
+};
+
+
+// for the dynamic categories
+
+export const categoriesSerching = async (req, res) =>{ 
+  try {
+    const category = req.params.category;
+    const post = await Blog.find({category:category});
+   if(post){
+      res.json(post);
+   }
+   else{
+      res.status(404).json({error:"Not Found"});
+   }
+  
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    res.status(500).json({ error: 'Failed to fetch post' });
   }
 };
